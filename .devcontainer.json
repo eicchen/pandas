@@ -30,6 +30,8 @@
 		"donjayamanne.githistory",
 		"eamodio.gitlens",
 		"mhutchie.git-graph",
-		"leytonoday.ghost-note"
+		"leytonoday.ghost-note",
+		"sebastian-lay.auto-reload",
+		"ms-python.mypy-type-checker"
 	]
 }
