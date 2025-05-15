@@ -225,3 +225,19 @@ def test_rolling_kurt_eq_value_fperr(step):
     a = Series([1.1] * 15).rolling(window=10, step=step).kurt()
     assert (a[a.index >= 9] == -3).all()
     assert a[a.index < 9].isna().all()
+
+def test_rolling_kurt_outlier_influence(step):
+    # #61416 Extreme values causes kurtosis value to become incorrect
+    test_len = 10 #! parameterize later
+    window_size = 5 #! parameterize later
+    test_series = Series(range(test_len))
+    test_series[0] = 1e6
+    test_series[3] = -1e6    
+    expected_series = (test_series[1:].reindex(range(test_len)))
+    
+    actual = test_series.rolling(window_size,min_periods=1).kurt()
+    expected = expected_series.rolling(window_size,min_periods=1).kurt()
+    
+    tm.assert_series_equal(actual.tail(window_size), 
+                           expected.tail(window_size)
+                        )
