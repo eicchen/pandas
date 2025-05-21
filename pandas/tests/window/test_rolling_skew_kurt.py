@@ -226,14 +226,27 @@ def test_rolling_kurt_eq_value_fperr(step):
     assert (a[a.index >= 9] == -3).all()
     assert a[a.index < 9].isna().all()
 
-def test_rolling_kurt_outlier_influence(step):
+@pytest.mark.parametrize("test_len, window_size, modifiers",
+                         [([0, 10], 5,  [[0,1e6], [3, -1e6]]),
+                          ([0, 10], 5,  [[0,1e-6], [3, 1e6]]),
+                          ([10, 100], 20,[[40, -1e10], [59, -9e9]]),
+                          ([105000, 110000], 200,[[105810, 0], [109900, -1e6], [109990, 0]])
+                          ]
+                        )
+def test_rolling_kurt_outlier_influence(test_len, window_size, modifiers):
     # #61416 Extreme values causes kurtosis value to become incorrect
-    test_len = 10 #! parameterize later
-    window_size = 5 #! parameterize later
-    test_series = Series(range(test_len))
-    test_series[0] = 1e6
-    test_series[3] = -1e6    
-    expected_series = (test_series[1:].reindex(range(test_len)))
+    test_series = Series(range(test_len[0], test_len[1]), index = range(test_len[0], test_len[1]))
+    for ind, number in modifiers:
+        test_series = test_series.replace(ind, number)
+        
+    #minimum elements needed for "window_size" number of kurts 
+    test_len_diff = test_len[1] - test_len[0]
+    min_elements_needed = test_len_diff - 2*window_size + 1 
+    expected_series = (test_series[min_elements_needed:].reindex(range(test_len[0], test_len[1])))
+    
+    print(test_series)
+    print(expected_series)
+        
     
     actual = test_series.rolling(window_size,min_periods=1).kurt()
     expected = expected_series.rolling(window_size,min_periods=1).kurt()
