@@ -1,5 +1,4 @@
 # cython: boundscheck=False, wraparound=False, cdivision=True
-from libc.stdio cimport printf
 from libc.math cimport (
     round,
     signbit,
@@ -751,22 +750,19 @@ cdef void update_sum_of_window( float64_t val,
     x_length_flag = abs(log10(abs(x_value[0][0]))) > 15 and isfinite(abs(log10(abs(x_value[0][0])))) == 1
     val_length_flag = abs(log10(abs(val_raised))) > 15 and isfinite(abs(log10(abs(val_raised)))) == 1
 
-    # We'll try to maintain comp_value as the counter for numbers <1e15
-
+    # We'll try to maintain comp_value as the counter for 
+    # numbers <1e15 to keep it from getting rounded out.
     if x_length_flag and val_length_flag:
         #Both > 1e15 or < 1-e15
         x_value[0][0] += val_raised
-        # printf("Both > 1e15\n")
 
     elif x_length_flag:
         comp_value[0][0] += val_raised
-        # printf("x_flag\n")
 
 
     elif val_length_flag:
         comp_value[0][0] += x_value[0][0]
         x_value[0][0] = val_raised
-        # printf("val_flag\n")
         
     else:
         #Neither are >1e15/<1e-15, safe to proceed
@@ -775,12 +771,6 @@ cdef void update_sum_of_window( float64_t val,
         if comp_value[0][0] != 0:
             x_value[0][0] += comp_value[0][0]
             comp_value[0][0] = 0
-
-    printf("%.25g\n", x_value[0][0])
-    
-    
-
-
 
 cdef void add_kurt(float64_t val, int64_t *nobs,
                    float64_t *x, float64_t *xx,
@@ -870,7 +860,6 @@ def roll_kurt(ndarray[float64_t] values, ndarray[int64_t] start,
 
             s = start[i]
             e = end[i]
-            printf("\n%d| S: %d, E: %d\n", i, s, e)
 
             # Over the first window, observations can only be added
             # never removed
@@ -890,8 +879,6 @@ def roll_kurt(ndarray[float64_t] values, ndarray[int64_t] start,
                              &compensation_x, &compensation_xx,
                              &compensation_xxx, &compensation_xxxx,
                              &num_consecutive_same_value, &prev_value)
-                    printf("    %g|A|x: %g, xx: %g, xxx: %g, xxxx: %g, num_cons: %ld\n", values_copy[j], x,xx,xxx,xxxx, num_consecutive_same_value)
-
 
             else:
 
@@ -903,16 +890,12 @@ def roll_kurt(ndarray[float64_t] values, ndarray[int64_t] start,
                                 &compensation_x, &compensation_xx,
                                 &compensation_xxx, &compensation_xxxx)
 
-                    printf("    %g|R|x: %g, xx: %g, xxx: %g, xxxx: %g, num_cons: %ld\n", values_copy[j], x,xx,xxx,xxxx, num_consecutive_same_value)
-
                 # calculate adds
                 for j in range(end[i - 1], e):
                     add_kurt(values_copy[j], &nobs, &x, &xx, &xxx, &xxxx,
                              &compensation_x, &compensation_xx,
                              &compensation_xxx, &compensation_xxxx,
                              &num_consecutive_same_value, &prev_value)
-                    printf("    %g|A|x: %g, xx: %g, xxx: %g, xxxx: %g, num_cons: %ld\n", values_copy[j], x,xx,xxx,xxxx, num_consecutive_same_value)
-
 
             output[i] = calc_kurt(minp, nobs, x, xx, xxx, xxxx,
                                   num_consecutive_same_value)
@@ -923,8 +906,6 @@ def roll_kurt(ndarray[float64_t] values, ndarray[int64_t] start,
                 xx = 0.0
                 xxx = 0.0
                 xxxx = 0.0
-
-    print("\n",output,"\n----------------------------------------------------------------------------")
 
     return output
 
