@@ -61,6 +61,7 @@ from pandas.core.dtypes.common import (
     is_numeric_dtype,
     is_object_dtype,
     is_string_dtype,
+    is_unsigned_integer_dtype,
     needs_i8_conversion,
 )
 from pandas.core.dtypes.dtypes import (
@@ -1717,6 +1718,20 @@ class _MergeOperation:
             if is_numeric_dtype(lk.dtype) and is_numeric_dtype(rk.dtype):
                 if lk.dtype.kind == rk.dtype.kind:
                     continue
+                
+                if(is_unsigned_integer_dtype(lk.dtype)):
+                    try:
+                        lk = lk.astype(rk.dtype)
+                        continue
+                    except TypeError as err:
+                        raise err
+                elif(is_unsigned_integer_dtype(rk.dtype)):
+                    try:
+                        rk = rk.astype(lk.dtype)
+                        # continue
+                    except TypeError as err:
+                        raise err
+
 
                 if isinstance(lk.dtype, ExtensionDtype) and not isinstance(
                     rk.dtype, ExtensionDtype

@@ -297,3 +297,29 @@ def test_astype_boolean():
     result = a.astype("boolean")
     expected = pd.array([True, False, True, True, None], dtype="boolean")
     tm.assert_extension_array_equal(result, expected)
+
+signed_list = ["int64", "float64", "Int64", "Float64"]
+unsigned_list = ["uint64", "UInt64"]
+@pytest.mark.parametrize(
+    "signed_dtype, unsigned_dtype",
+    [(s_dt, u_dt) for s_dt in signed_list for u_dt in unsigned_list]
+)
+def test_unsigned_1to1_validation(signed_dtype, unsigned_dtype):
+    #61688
+    input1 = [1721088000012322083, 1721088047408560273, 1721088047408560451]
+    input2 = 1
+    df1 = pd.DataFrame()
+    df2 = pd.DataFrame()
+    df1["1"] = pd.Series(input1, dtype=signed_dtype)   # Note different types here
+    df2["1"] = pd.Series(input1, dtype=unsigned_dtype)  # Note different types here
+    df1["2"] = input2
+    df2["2"] = input2
+    
+    result = pd.merge(df1, df2, on=["1", "2"], how="left", validate="1:1")
+    expected = pd.merge(df1, df2, on=["1"], how="left", validate="1:1")
+    # expected = pd.merge(df1, df2, on=["1"], how="left", validate="1:1")
+    
+    print(result)
+    print(expected)
+    #TODO add reverse tesetcase
+    tm.assert_frame_equal(result, expected)
