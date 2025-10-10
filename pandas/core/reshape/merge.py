@@ -61,7 +61,6 @@ from pandas.core.dtypes.common import (
     is_numeric_dtype,
     is_object_dtype,
     is_string_dtype,
-    is_unsigned_integer_dtype,
     needs_i8_conversion,
 )
 from pandas.core.dtypes.dtypes import (
@@ -1718,20 +1717,6 @@ class _MergeOperation:
             if is_numeric_dtype(lk.dtype) and is_numeric_dtype(rk.dtype):
                 if lk.dtype.kind == rk.dtype.kind:
                     continue
-                
-                if(is_unsigned_integer_dtype(lk.dtype)):
-                    try:
-                        lk = lk.astype(rk.dtype)
-                        continue
-                    except TypeError as err:
-                        raise err
-                elif(is_unsigned_integer_dtype(rk.dtype)):
-                    try:
-                        rk = rk.astype(lk.dtype)
-                        # continue
-                    except TypeError as err:
-                        raise err
-
 
                 if isinstance(lk.dtype, ExtensionDtype) and not isinstance(
                     rk.dtype, ExtensionDtype
@@ -2929,11 +2914,35 @@ def _factorize_keys(
     return llab, rlab, count
 
 
+def _safe_abs_max(array_or_ndarry):
+    if hasattr(array_or_ndarry, "to_numpy"):
+        array_or_ndarry = array_or_ndarry.to_numpy()
+    return np.abs(array_or_ndarry).max()
+
+
 def _convert_arrays_and_get_rizer_klass(
     lk: ArrayLike, rk: ArrayLike
 ) -> tuple[type[libhashtable.Factorizer], ArrayLike, ArrayLike]:
     klass: type[libhashtable.Factorizer]
+
     if is_numeric_dtype(lk.dtype):
+        max_lk_len = len(str(_safe_abs_max(lk)))
+        max_rk_len = len(str(_safe_abs_max(rk)))
+        if max_lk_len >= 15 or max_rk_len >= 15:
+            # If loss of precision would occur during conversion
+            #!apparently it can happen with the same dtype too???
+            if is_float_dtype(lk.dtype) or is_float_dtype(rk.dtype):
+                # TODO issues with handling floats without casting
+                # Currently trying Decimal, remove if not solution
+                #!Temp solution
+                raise ValueError(
+                    "Number too large, converting to float would cause precision loss."
+                )
+            # print(rk == lk)
+            klass = libhashtable.ObjectFactorizer
+            lk = ensure_object(lk)
+            rk = ensure_object(rk)
+            return klass, lk, rk
         if lk.dtype != rk.dtype:
             dtype = find_common_type([lk.dtype, rk.dtype])
             if isinstance(dtype, ExtensionDtype):
