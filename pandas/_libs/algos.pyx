@@ -363,7 +363,7 @@ def nancorr(const float64_t[:, :] mat, bint cov=False, minp=None):
             for yi in range(xi+1):
                 # Welford's method for the variance-calculation
                 # https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
-                # Changed to Welford's two-pass for improved numeric stability
+                # Use first valid value as reference to improve numeric stability
                 nobs = ssqdmx = ssqdmy = cxy = meanx = meany = 0
                 ref_set = False
                 for i in range(N):

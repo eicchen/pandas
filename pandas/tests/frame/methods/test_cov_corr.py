@@ -506,6 +506,7 @@ class TestDataFrameCorrWith:
         np.array([[1e-8, 3.42e-8], [2e-9, 3e-8]], dtype=np.longdouble),
         np.array([[1e12, 1e-8], [1e12 + 1e-3, 2e-8]], dtype=np.longdouble),
         np.array([[0.0, 1e-12], [1e-14, 0.0]], dtype=np.longdouble),
+        np.array([[1e15, 1e15 + 1e-3], [1e-20, 2e-20]], dtype=np.longdouble),
     ]
 
     @pytest.mark.parametrize("values", pair_cases)
@@ -516,6 +517,13 @@ class TestDataFrameCorrWith:
         tm.assert_frame_equal(result, expected)
 
     multi_cases = [
+        np.array(
+            [
+                [30.0, 30.100000381469727, 30.2],
+                [116.80000305175781, 116.8000030517578, 116.9000030517578],
+            ],
+            dtype=np.longdouble,
+        ),
         np.array(
             [[1e12, 1e-8, 5.5], [1e12 + 1e-3, 2e-8, 5.50000001]], dtype=np.longdouble
         ),
